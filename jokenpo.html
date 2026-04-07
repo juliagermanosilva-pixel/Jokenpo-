@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jokenpô Animal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f7f3ec;
+  --surface: #fdfaf5;
+  --border: #e8e0d0;
+  --border-soft: #f0ebe0;
+  --text: #221c10;
+  --muted: #9a8e78;
+  --accent: #7a5c2e;
+  --gold: #c08b2a;
+  --gold-light: #f5e4b8;
+  --green: #3b6b42;
+  --red: #8b3535;
+  --blue: #2e5c7a;
+  --shadow: rgba(34,28,16,0.07);
+  --shadow-lg: rgba(34,28,16,0.13);
+  --p1: #5c7a2e;
+  --p2: #7a2e5c;
+  --radius: 20px;
+  --radius-sm: 12px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2rem 1rem 4rem;
+  overflow-x: hidden;
+}
+
+/* ---- BACKGROUND TEXTURE ---- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(192,139,42,0.07) 0%, transparent 50%),
+    radial-gradient(circle at 85% 75%, rgba(59,107,66,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(122,92,46,0.03) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---- LEAF DECORATIONS ---- */
+.leaf { position: fixed; pointer-events: none; z-index: 0; opacity: 0.12; font-size: 2rem; animation: drift linear infinite; }
+.leaf:nth-child(1) { left: 3%; top: 10%; animation-duration: 18s; animation-delay: 0s; }
+.leaf:nth-child(2) { left: 90%; top: 5%; animation-duration: 22s; animation-delay: -5s; font-size: 1.5rem; }
+.leaf:nth-child(3) { left: 7%; top: 70%; animation-duration: 15s; animation-delay: -9s; font-size: 1.2rem; }
+.leaf:nth-child(4) { left: 88%; top: 60%; animation-duration: 20s; animation-delay: -13s; }
+.leaf:nth-child(5) { left: 50%; top: 2%; animation-duration: 25s; animation-delay: -3s; font-size: 1.8rem; }
+
+@keyframes drift {
+  0%   { transform: translateY(0) rotate(0deg); }
+  25%  { transform: translateY(-15px) rotate(10deg); }
+  50%  { transform: translateY(0) rotate(0deg); }
+  75%  { transform: translateY(10px) rotate(-8deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+/* ---- WRAP ---- */
+.wrap { position: relative; z-index: 1; width: 100%; max-width: 820px; }
+
+/* ---- HEADER ---- */
+header { text-align: center; margin-bottom: 2.5rem; padding-top: 1rem; }
+
+.header-animals {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: .75rem;
+  font-size: 2.8rem;
+  line-height: 1;
+}
+
+.header-animals span { display: inline-block; animation: bob 2.8s ease-in-out infinite; }
+.header-animals span:nth-child(2) { animation-delay: .35s; font-size: 2.2rem; opacity: .7; }
+.header-animals span:nth-child(3) { animation-delay: .7s; }
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.08); }
+}
+
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: .4rem;
+}
+
+h1 em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.tagline {
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ---- SCREEN ---- */
+.screen { display: none; animation: fadeIn .4s ease; }
+.screen.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* ---- WELCOME SCREEN ---- */
+.welcome-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem 2rem;
+  box-shadow: 0 6px 40px var(--shadow);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.welcome-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  text-align: center;
+  margin-bottom: .4rem;
+}
+
+.welcome-intro {
+  text-align: center;
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.rules-preview {
+  display: flex;
+  justify-content: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.rule-chip {
+  background: var(--gold-light);
+  border: 1px solid #e8d090;
+  border-radius: 50px;
+  padding: .3rem .9rem;
+  font-size: .78rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.player-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 480px) {
+  .player-inputs { grid-template-columns: 1fr; }
+}
+
+.input-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .75rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+  font-weight: 500;
+}
+
+.input-group input {
+  width: 100%;
+  padding: .7rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .95rem;
+  color: var(--text);
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+}
+
+.input-group input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(192,139,42,.12);
+}
+
+.input-group input::placeholder { color: #ccc4b0; }
+
+.btn-start {
+  width: 100%;
+  padding: .85rem 2rem;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform .15s, background .2s, box-shadow .2s;
+  letter-spacing: 0.04em;
+}
+
+.btn-start:hover {
+  background: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(34,28,16,.2);
+}
+
+.btn-start:active { transform: translateY(0); box-shadow: none; }
+
+.error-msg {
+  color: var(--red);
+  font-size: .8rem;
+  text-align: center;
+  margin-top: .5rem;
+  min-height: 1.1em;
+  transition: opacity .2s;
+}
+
+/* ---- GAME SCREEN ---- */
+.scoreboard {
+  display: grid;
+  grid-template-columns: 1fr 80px 1fr;
+  align-items: center;
+  gap: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 24px var(--shadow);
+}
+
+.player-info { text-align: center; }
+
+.player-info .avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin: 0 auto .5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  border: 2px solid var(--border);
+}
+
+.p1-info .avatar { background: #e8f0e0; border-color: #b8d0a0; }
+.p2-info .avatar { background: #f0e0ec; border-color: #d0a0c0; }
+
+.player-info .pname {
+  font-size: .75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.player-info .score-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.p1-info .score-num { color: var(--p1); }
+.p2-info .score-num { color: var(--p2); }
+
+.vs-col {
+  text-align: center;
+}
+
+.vs-badge {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.round-label {
+  font-size: .7rem;
+  color: var(--border);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: .2rem .6rem;
+}
+
+/* ---- ARENA ---- */
+.arena {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 24px var(--shadow);
+}
+
+.arena-title {
+  text-align: center;
+  font-size: .75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.arena-title span { color: var(--gold); font-weight: 600; }
+
+/* ---- CHOICE PANELS ---- */
+.choice-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .choice-panels { grid-template-columns: 1fr; gap: 1rem; }
+  .scoreboard { grid-template-columns: 1fr 50px 1fr; padding: 1rem; }
+}
+
+.panel-label {
+  font-size: .72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  text-align: center;
+  margin-bottom: .75rem;
+  font-weight: 500;
+}
+
+.choices-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .6rem;
+}
+
+.choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: .8rem .4rem;
+  background: var(--bg);
+  border: 2px solid var(--border-soft);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all .18s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.choice-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 60%, rgba(255,255,255,.6));
+  pointer-events: none;
+}
+
+.choice-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px var(--shadow-lg);
+  border-color: var(--gold);
+}
+
+.choice-btn.selected {
+  border-color: currentColor;
+  background: white;
+  box-shadow: 0 4px 16px var(--shadow-lg);
+}
+
+.p1-panel .choice-btn.selected { border-color: var(--p1); background: #f0f6e8; }
+.p2-panel .choice-btn.selected { border-color: var(--p2); background: #f8f0f4; }
+
+.choice-btn .animal-icon { font-size: 2rem; line-height: 1; }
+.choice-btn .choice-name { font-size: .65rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; font-weight: 500; }
+.choice-btn .choice-animal { font-size: .6rem; color: var(--border); letter-spacing: .04em; font-style: italic; }
+
+.choice-btn:active { transform: scale(.96); }
+
+/* ---- RESULT ---- */
+.result-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 2rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 24px var(--shadow);
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  transition: all .3s ease;
+}
+
+.result-bar .result-emoji { font-size: 2rem; animation: pop .4s cubic-bezier(.36,.07,.19,.97); }
+.result-bar .result-text { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700; }
+.result-bar .result-sub { font-size: .82rem; color: var(--muted); }
+.result-bar.win { border-color: #b8d090; background: #f4fae8; }
+.result-bar.draw { border-color: #e0d8c0; background: #faf8f0; }
+.result-bar.initial { border-style: dashed; }
+
+@keyframes pop {
+  0% { transform: scale(.4) rotate(-10deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(5deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* ---- CONTROLS ---- */
+.controls {
+  display: flex;
+  gap: .75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: .7rem 1.6rem;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: .02em;
+  border: 1.5px solid transparent;
+}
+
+.btn-play {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.btn-play:hover { background: var(--accent); border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 18px var(--shadow-lg); }
+.btn-play:disabled { background: var(--border); border-color: var(--border); color: var(--muted); cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--gold-light); }
+
+/* ---- RULES MODAL ---- */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(34,28,16,.4);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(3px);
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(34,28,16,.25);
+  animation: fadeIn .3s ease;
+  position: relative;
+}
+
+.modal h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+
+.rules-list { list-style: none; display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.5rem; }
+
+.rules-list li {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .65rem 1rem;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  font-size: .9rem;
+  border: 1px solid var(--border-soft);
+}
+
+.rules-list .r-icon { font-size: 1.3rem; }
+.rules-list .r-arrow { color: var(--gold); font-weight: 700; margin: 0 .2rem; }
+
+.modal-close {
+  width: 100%;
+  padding: .7rem;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.modal-close:hover { background: var(--accent); }
+
+/* ---- HISTORY ---- */
+.history-section { margin-top: 1.5rem; }
+
+.history-title {
+  font-size: .72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  text-align: center;
+  margin-bottom: .75rem;
+  font-weight: 500;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.history-list::-webkit-scrollbar { width: 4px; }
+.history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .5rem 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-size: .8rem;
+  animation: slideIn .3s ease;
+}
+
+@keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+
+.history-item .h-round { color: var(--border); font-size: .7rem; min-width: 50px; }
+.history-item .h-moves { display: flex; align-items: center; gap: .4rem; flex: 1; justify-content: center; }
+.history-item .h-result { font-weight: 500; min-width: 80px; text-align: right; font-size: .75rem; }
+.history-item.win-p1 .h-result { color: var(--p1); }
+.history-item.win-p2 .h-result { color: var(--p2); }
+.history-item.draw .h-result { color: var(--muted); }
+
+/* ---- WINNER SCREEN ---- */
+.winner-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: 0 6px 40px var(--shadow);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.trophy { font-size: 4rem; display: block; margin-bottom: 1rem; animation: spin .6s cubic-bezier(.36,.07,.19,.97); }
+@keyframes spin { 0% { transform: scale(0) rotate(-180deg); } 100% { transform: scale(1) rotate(0); } }
+
+.winner-card h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: .4rem; }
+.winner-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 2.2rem; color: var(--gold); margin-bottom: .5rem; }
+.winner-score { font-size: .88rem; color: var(--muted); margin-bottom: 2rem; }
+.winner-animals { font-size: 2.5rem; margin-bottom: 2rem; animation: bounce 1s ease infinite; }
+@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+.winner-buttons { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+
+/* ---- PROGRESS BAR ---- */
+.progress-bar {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background .3s;
+}
+
+.progress-dot.win-p1 { background: var(--p1); }
+.progress-dot.win-p2 { background: var(--p2); }
+.progress-dot.draw-dot { background: var(--muted); }
+</style>
+</head>
+
+<body>
+
+<!-- Leaf decorations -->
+<div class="leaf">🍃</div>
+<div class="leaf">🌿</div>
+<div class="leaf">🍂</div>
+<div class="leaf">🌱</div>
+<div class="leaf">🍀</div>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-animals">
+      <span>🦅</span>
+      <span>🌿</span>
+      <span>🐻</span>
+    </div>
+    <h1>Joken<em>pô</em> Animal</h1>
+    <p class="tagline">O duelo da floresta</p>
+  </header>
+
+  <!-- ===== WELCOME SCREEN ===== -->
+  <div id="screen-welcome" class="screen active">
+    <div class="welcome-card">
+      <h2>Bem-vindos à arena 🌿</h2>
+      <p class="welcome-intro">
+        Dois guerreiros da floresta se enfrentam.<br>
+        Águia, Urso ou Raposa — quem vencerá?
+      </p>
+
+      <div class="rules-preview">
+        <span class="rule-chip">🦅 Águia vence Raposa</span>
+        <span class="rule-chip">🐻 Urso vence Águia</span>
+        <span class="rule-chip">🦊 Raposa vence Urso</span>
+      </div>
+
+      <div class="player-inputs">
+        <div class="input-group">
+          <label>🌿 Jogador 1</label>
+          <input type="text" id="name1" placeholder="Seu nome..." maxlength="18" autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label>🍂 Jogador 2</label>
+          <input type="text" id="name2" placeholder="Seu nome..." maxlength="18" autocomplete="off">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <label style="font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing:.08em; font-weight:500; display:block; margin-bottom:8px;">🏆 Rodadas para vencer</label>
+        <div style="display:flex; gap:.5rem; justify-content:center;">
+          <button class="rounds-opt btn btn-secondary active-opt" data-rounds="3" onclick="setRounds(3,this)">Melhor de 3</button>
+          <button class="rounds-opt btn btn-secondary" data-rounds="5" onclick="setRounds(5,this)">Melhor de 5</button>
+          <button class="rounds-opt btn btn-secondary" data-rounds="7" onclick="setRounds(7,this)">Melhor de 7</button>
+        </div>
+      </div>
+
+      <p class="error-msg" id="error-msg"></p>
+      <button class="btn-start" onclick="startGame()">Entrar na Arena →</button>
+    </div>
+  </div>
+
+  <!-- ===== GAME SCREEN ===== -->
+  <div id="screen-game" class="screen">
+
+    <!-- SCOREBOARD -->
+    <div class="scoreboard">
+      <div class="player-info p1-info">
+        <div class="avatar">🌿</div>
+        <div class="pname" id="display-name1">Jogador 1</div>
+        <div class="score-num" id="score1">0</div>
+      </div>
+      <div class="vs-col">
+        <span class="vs-badge">vs</span>
+        <span class="round-label" id="round-label">Rodada 1</span>
+      </div>
+      <div class="player-info p2-info">
+        <div class="avatar">🍂</div>
+        <div class="pname" id="display-name2">Jogador 2</div>
+        <div class="score-num" id="score2">0</div>
+      </div>
+    </div>
+
+    <!-- PROGRESS DOTS -->
+    <div class="progress-bar" id="progress-bar"></div>
+
+    <!-- RESULT BAR -->
+    <div class="result-bar initial" id="result-bar">
+      <div class="result-emoji">🌲</div>
+      <div class="result-text">Escolha sua jogada!</div>
+      <div class="result-sub">Cada jogador escolhe em segredo</div>
+    </div>
+
+    <!-- ARENA: CHOICES -->
+    <div class="arena">
+      <div class="arena-title">Escolha seu animal — <span id="arena-instruction">ambos escolhem ao mesmo tempo</span></div>
+
+      <div class="choice-panels">
+
+        <!-- Player 1 -->
+        <div class="p1-panel">
+          <div class="panel-label" id="panel-label1">🌿 Jogador 1</div>
+          <div class="choices-grid">
+            <button class="choice-btn" onclick="select(1,'pedra')" id="p1-pedra" data-player="1" data-choice="pedra">
+              <span class="animal-icon">🦅</span>
+              <span class="choice-name">Pedra</span>
+              <span class="choice-animal">Águia</span>
+            </button>
+            <button class="choice-btn" onclick="select(1,'papel')" id="p1-papel" data-player="1" data-choice="papel">
+              <span class="animal-icon">🐻</span>
+              <span class="choice-name">Papel</span>
+              <span class="choice-animal">Urso</span>
+            </button>
+            <button class="choice-btn" onclick="select(1,'tesoura')" id="p1-tesoura" data-player="1" data-choice="tesoura">
+              <span class="animal-icon">🦊</span>
+              <span class="choice-name">Tesoura</span>
+              <span class="choice-animal">Raposa</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Player 2 -->
+        <div class="p2-panel">
+          <div class="panel-label" id="panel-label2">🍂 Jogador 2</div>
+          <div class="choices-grid">
+            <button class="choice-btn" onclick="select(2,'pedra')" id="p2-pedra" data-player="2" data-choice="pedra">
+              <span class="animal-icon">🦅</span>
+              <span class="choice-name">Pedra</span>
+              <span class="choice-animal">Águia</span>
+            </button>
+            <button class="choice-btn" onclick="select(2,'papel')" id="p2-papel" data-player="2" data-choice="papel">
+              <span class="animal-icon">🐻</span>
+              <span class="choice-name">Papel</span>
+              <span class="choice-animal">Urso</span>
+            </button>
+            <button class="choice-btn" onclick="select(2,'tesoura')" id="p2-tesoura" data-player="2" data-choice="tesoura">
+              <span class="animal-icon">🦊</span>
+              <span class="choice-name">Tesoura</span>
+              <span class="choice-animal">Raposa</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls">
+      <button class="btn btn-play" id="btn-play" onclick="jogar()" disabled>Revelar jogadas ▶</button>
+      <button class="btn btn-secondary" onclick="showRules()">📖 Regras</button>
+      <button class="btn btn-secondary" onclick="resetGame()">↩ Sair</button>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="history-section" id="history-section" style="display:none">
+      <div class="history-title">Histórico de rodadas</div>
+      <div class="history-list" id="history-list"></div>
+    </div>
+
+  </div>
+
+  <!-- ===== WINNER SCREEN ===== -->
+  <div id="screen-winner" class="screen">
+    <div class="winner-card">
+      <span class="trophy">🏆</span>
+      <h2>Campeão da Floresta!</h2>
+      <div class="winner-name" id="winner-name">—</div>
+      <div class="winner-score" id="winner-score"></div>
+      <div class="winner-animals" id="winner-animals">🦅🐻🦊</div>
+      <div class="winner-buttons">
+        <button class="btn btn-play" onclick="rematch()">🔄 Revanche!</button>
+        <button class="btn btn-secondary" onclick="resetGame()">🏠 Menu principal</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- RULES MODAL -->
+<div class="modal-overlay" id="modal-rules">
+  <div class="modal">
+    <h3>🌿 Regras da Floresta</h3>
+    <ul class="rules-list">
+      <li>
+        <span class="r-icon">🦅</span>
+        <span><strong>Águia</strong> (Pedra)</span>
+        <span class="r-arrow">→ vence →</span>
+        <span>🦊 <strong>Raposa</strong></span>
+      </li>
+      <li>
+        <span class="r-icon">🐻</span>
+        <span><strong>Urso</strong> (Papel)</span>
+        <span class="r-arrow">→ vence →</span>
+        <span>🦅 <strong>Águia</strong></span>
+      </li>
+      <li>
+        <span class="r-icon">🦊</span>
+        <span><strong>Raposa</strong> (Tesoura)</span>
+        <span class="r-arrow">→ vence →</span>
+        <span>🐻 <strong>Urso</strong></span>
+      </li>
+    </ul>
+    <p style="font-size:.8rem; color:var(--muted); text-align:center; margin-bottom:1.2rem;">
+      Mesma jogada = empate 🌿 — ninguém pontua
+    </p>
+    <button class="modal-close" onclick="hideRules()">Entendido!</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// GAME STATE
+// ============================================================
+let state = {
+  name1: '', name2: '',
+  score1: 0, score2: 0,
+  move1: null, move2: null,
+  round: 1,
+  maxWins: 2,   // first to maxWins wins (best of 3 = 2 wins)
+  totalRounds: 3,
+  history: [],
+  gameOver: false
+};
+
+const ANIMAL = { pedra: '🦅', papel: '🐻', tesoura: '🦊' };
+const LABEL  = { pedra: 'Águia', papel: 'Urso', tesoura: 'Raposa' };
+
+// ============================================================
+// ROUNDS SELECTION
+// ============================================================
+function setRounds(n, el) {
+  state.totalRounds = n;
+  state.maxWins = Math.ceil(n / 2);
+  document.querySelectorAll('.rounds-opt').forEach(b => b.style.background = '');
+  document.querySelectorAll('.rounds-opt').forEach(b => b.style.borderColor = '');
+  document.querySelectorAll('.rounds-opt').forEach(b => b.style.color = '');
+  el.style.background = 'var(--text)';
+  el.style.borderColor = 'var(--text)';
+  el.style.color = 'var(--bg)';
+}
+
+// init first button style
+window.addEventListener('DOMContentLoaded', () => {
+  const first = document.querySelector('.rounds-opt');
+  if (first) { first.style.background='var(--text)'; first.style.borderColor='var(--text)'; first.style.color='var(--bg)'; }
+
+  // enter key on inputs
+  document.getElementById('name1').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('name2').focus(); });
+  document.getElementById('name2').addEventListener('keydown', e => { if(e.key==='Enter') startGame(); });
+});
+
+// ============================================================
+// START GAME
+// ============================================================
+function startGame() {
+  const n1 = document.getElementById('name1').value.trim();
+  const n2 = document.getElementById('name2').value.trim();
+  const err = document.getElementById('error-msg');
+
+  if (!n1 || !n2) {
+    err.textContent = '⚠ Por favor, informe o nome dos dois jogadores.';
+    return;
+  }
+  if (n1.toLowerCase() === n2.toLowerCase()) {
+    err.textContent = '⚠ Os jogadores precisam ter nomes diferentes.';
+    return;
+  }
+  err.textContent = '';
+
+  state.name1 = n1; state.name2 = n2;
+  state.score1 = 0; state.score2 = 0;
+  state.round = 1; state.history = []; state.gameOver = false;
+
+  document.getElementById('display-name1').textContent = n1;
+  document.getElementById('display-name2').textContent = n2;
+  document.getElementById('panel-label1').textContent = '🌿 ' + n1;
+  document.getElementById('panel-label2').textContent = '🍂 ' + n2;
+
+  updateScoreboard();
+  buildProgressBar();
+  showScreen('game');
+  resetRound();
+}
+
+// ============================================================
+// SELECT MOVE
+// ============================================================
+function select(player, move) {
+  if (state.gameOver) return;
+
+  if (player === 1) {
+    state.move1 = move;
+    document.querySelectorAll('.p1-panel .choice-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('p1-' + move).classList.add('selected');
+  } else {
+    state.move2 = move;
+    document.querySelectorAll('.p2-panel .choice-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('p2-' + move).classList.add('selected');
+  }
+
+  const btn = document.getElementById('btn-play');
+  if (state.move1 && state.move2) {
+    btn.disabled = false;
+    setResult('⚡', 'Prontos! Clique em Revelar.', 'Ambos escolheram — hora da verdade!', '');
+  } else if (state.move1) {
+    setResult('🌿', `${state.name1} escolheu. Aguardando ${state.name2}...`, '', '');
+  } else {
+    setResult('🍂', `${state.name2} escolheu. Aguardando ${state.name1}...`, '', '');
+  }
+}
+
+// ============================================================
+// JOGAR — game logic (all bugs from notebook fixed)
+// ============================================================
+function jogar() {
+  const m1 = state.move1;
+  const m2 = state.move2;
+
+  // Determine winner (fixed scope bug from original Python)
+  let winner = 0; // 0=draw, 1=p1, 2=p2
+  if (m1 === m2) {
+    winner = 0;
+  } else if (
+    (m1 === 'pedra'  && m2 === 'tesoura') ||
+    (m1 === 'papel'  && m2 === 'pedra')   ||
+    (m1 === 'tesoura' && m2 === 'papel')
+  ) {
+    winner = 1;
+  } else {
+    winner = 2;
+  }
+
+  // Update scores (fixed: pontuacao2 UnboundLocalError in original)
+  if (winner === 1) state.score1++;
+  if (winner === 2) state.score2++;
+
+  // Build result display
+  const icon1 = ANIMAL[m1], icon2 = ANIMAL[m2];
+  const lbl1 = LABEL[m1],   lbl2 = LABEL[m2];
+
+  let emoji, text, sub, cls;
+  if (winner === 0) {
+    emoji = '🤝'; text = 'Empate!';
+    sub = `${icon1} ${lbl1} vs ${icon2} ${lbl2} — força igual!`;
+    cls = 'draw';
+  } else if (winner === 1) {
+    emoji = icon1; text = `${state.name1} venceu!`;
+    sub = `${icon1} ${lbl1} derrota ${icon2} ${lbl2}`;
+    cls = 'win';
+  } else {
+    emoji = icon2; text = `${state.name2} venceu!`;
+    sub = `${icon2} ${lbl2} derrota ${icon1} ${lbl1}`;
+    cls = 'win';
+  }
+
+  setResult(emoji, text, sub, cls);
+  updateScoreboard();
+
+  // Add to history
+  const histCls = winner === 0 ? 'draw' : (winner === 1 ? 'win-p1' : 'win-p2');
+  const histResult = winner === 0 ? 'Empate' : (winner === 1 ? `✓ ${state.name1}` : `✓ ${state.name2}`);
+  state.history.unshift({ round: state.round, m1, m2, result: histResult, cls: histCls });
+  renderHistory();
+  updateProgressBar(winner);
+
+  // Disable choices after reveal
+  document.querySelectorAll('.choice-btn').forEach(b => b.style.opacity = '.5');
+  document.getElementById('btn-play').disabled = true;
+
+  // Check for game winner
+  const winsNeeded = state.maxWins;
+  setTimeout(() => {
+    if (state.score1 >= winsNeeded || state.score2 >= winsNeeded) {
+      showWinner();
+    } else {
+      state.round++;
+      document.getElementById('round-label').textContent = `Rodada ${state.round}`;
+      setTimeout(resetRound, 1200);
+    }
+  }, 1800);
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function setResult(emoji, text, sub, cls) {
+  const bar = document.getElementById('result-bar');
+  bar.className = 'result-bar ' + (cls || '');
+  bar.innerHTML = `
+    <div class="result-emoji">${emoji}</div>
+    <div class="result-text">${text}</div>
+    ${sub ? `<div class="result-sub">${sub}</div>` : ''}
+  `;
+}
+
+function updateScoreboard() {
+  document.getElementById('score1').textContent = state.score1;
+  document.getElementById('score2').textContent = state.score2;
+  document.getElementById('round-label').textContent = `Rodada ${state.round}`;
+}
+
+function resetRound() {
+  state.move1 = null; state.move2 = null;
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.classList.remove('selected');
+    b.style.opacity = '1';
+  });
+  document.getElementById('btn-play').disabled = true;
+  setResult('🌲', 'Escolha sua jogada!', 'Cada jogador escolhe em segredo', 'initial');
+}
+
+function buildProgressBar() {
+  const bar = document.getElementById('progress-bar');
+  bar.innerHTML = '';
+  const total = state.totalRounds + 2; // extra buffer
+  for (let i = 0; i < state.totalRounds + 2; i++) {
+    const d = document.createElement('div');
+    d.className = 'progress-dot';
+    d.id = `dot-${i}`;
+    bar.appendChild(d);
+  }
+}
+
+function updateProgressBar(winner) {
+  const dots = document.querySelectorAll('.progress-dot');
+  const idx = state.history.length - 1;
+  if (dots[idx]) {
+    dots[idx].className = 'progress-dot ' + (winner === 1 ? 'win-p1' : winner === 2 ? 'win-p2' : 'draw-dot');
+  }
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  const section = document.getElementById('history-section');
+  section.style.display = 'block';
+  list.innerHTML = state.history.map(h => `
+    <div class="history-item ${h.cls}">
+      <span class="h-round">Rodada ${h.round}</span>
+      <span class="h-moves">${ANIMAL[h.m1]} ${LABEL[h.m1]} <span style="color:var(--muted);font-size:.7rem">vs</span> ${ANIMAL[h.m2]} ${LABEL[h.m2]}</span>
+      <span class="h-result">${h.result}</span>
+    </div>
+  `).join('');
+}
+
+function showWinner() {
+  const isP1 = state.score1 > state.score2;
+  const name = isP1 ? state.name1 : state.name2;
+  const sc1 = state.score1, sc2 = state.score2;
+
+  document.getElementById('winner-name').textContent = name;
+  document.getElementById('winner-score').textContent =
+    `${state.name1} ${sc1} × ${sc2} ${state.name2}`;
+  document.getElementById('winner-animals').textContent = isP1 ? '🦅🐻🦊' : '🦊🐻🦅';
+  state.gameOver = true;
+  showScreen('winner');
+}
+
+function rematch() {
+  state.score1 = 0; state.score2 = 0;
+  state.round = 1; state.history = []; state.gameOver = false;
+  updateScoreboard();
+  buildProgressBar();
+  document.getElementById('history-section').style.display = 'none';
+  document.getElementById('history-list').innerHTML = '';
+  showScreen('game');
+  resetRound();
+}
+
+function resetGame() {
+  showScreen('welcome');
+  document.getElementById('name1').value = '';
+  document.getElementById('name2').value = '';
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function showRules() { document.getElementById('modal-rules').classList.add('active'); }
+function hideRules() { document.getElementById('modal-rules').classList.remove('active'); }
+
+document.getElementById('modal-rules').addEventListener('click', function(e) {
+  if (e.target === this) hideRules();
+});
+</script>
+</body>
+</html>
